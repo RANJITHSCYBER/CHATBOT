@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Chatbot Assistant</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            word-wrap: break-word;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .bot-message {
+            background-color: #f0f0f0;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+        
+        #messageInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #messageInput:focus {
+            border-color: #667eea;
+        }
+        
+        #sendButton {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        #sendButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        #sendButton:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ccc;
+        }
+        
+        .dot.connected {
+            background-color: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 15px;
+            background-color: #f0f0f0;
+            border-radius: 18px;
+            width: fit-content;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite both;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+        
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            padding: 15px;
+            background-color: #f0f4ff;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 MCP Intelligent Assistant</h1>
+            <p>Connected to xiaozhi.me MCP Server</p>
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot-message welcome-message">
+                <p>👋 Hello! I am an intelligent assistant based on MCP protocol</p>
+                <p style="font-size: 12px; margin-top: 5px;">Connected to server, ready to chat!</p>
+            </div>
+        </div>
+        
+        <div class="status">
+            <div class="status-indicator">
+                <div class="dot" id="statusDot"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+            <span id="connectionInfo">MCP WebSocket Server (proxied)</span>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type your question here..." autocomplete="off">
+            <button id="sendButton" onclick="sendMessage()" disabled>Send</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Using Socket.io to communicate with server (server proxies to MCP)
+        const socket = io();
+        let sessionId = null;
+        let awaitingResponse = false;
+
+        // DOM Elements
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const statusText = document.getElementById('statusText');
+        const statusDot = document.getElementById('statusDot');
+
+        function addMessage(role, htmlContent) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + (role === 'user' ? 'user-message' : 'bot-message');
+            messageDiv.innerHTML = htmlContent;
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function addUserMessage(text) {
+            addMessage('user', escapeHtml(text));
+        }
+
+        function addBotMessage(text) {
+            removeTypingIndicator();
+            addMessage('bot', text.replace(/\n/g, '<br>'));
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showTypingIndicator() {
+            removeTypingIndicator();
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typingIndicator';
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'typing-dot';
+                typingDiv.appendChild(dot);
+            }
+            chatContainer.appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            const t = document.getElementById('typingIndicator');
+            if (t) t.remove();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Socket events
+        socket.on('connect', () => {
+            statusText.textContent = 'Connected (server)';
+            statusDot.classList.add('connected');
+            sendButton.disabled = false;
+        });
+
+        socket.on('disconnect', () => {
+            statusText.textContent = 'Disconnected';
+            statusDot.classList.remove('connected');
+            sendButton.disabled = true;
+        });
+
+        socket.on('session', (data) => {
+            sessionId = data.sessionId;
+            console.log('session', sessionId);
+        });
+
+        socket.on('history', (items) => {
+            // show history
+            items.forEach(it => {
+                const content = typeof it.message === 'string' ? escapeHtml(it.message) : escapeHtml(JSON.stringify(it.message));
+                addMessage(it.role === 'user' ? 'user' : 'bot', content);
+            });
+        });
+
+        socket.on('mcp_status', (info) => {
+            if (info.status === 'open') {
+                statusText.textContent = 'Upstream Connected';
+                statusDot.classList.add('connected');
+            } else if (info.status === 'closed') {
+                statusText.textContent = 'Upstream Disconnected';
+                statusDot.classList.remove('connected');
+            } else if (info.status === 'error') {
+                statusText.textContent = 'Upstream Error';
+                statusDot.classList.remove('connected');
+                addBotMessage('<span class="error-message">Upstream error: ' + escapeHtml(info.message || 'Unknown') + '</span>');
+            }
+        });
+
+        socket.on('bot_message', (msg) => {
+            awaitingResponse = false;
+            sendButton.disabled = false;
+            // msg may be string or object
+            let text = '';
+            if (typeof msg === 'string') text = escapeHtml(msg);
+            else if (msg && typeof msg === 'object') {
+                text = escapeHtml(msg.text || JSON.stringify(msg));
+            }
+            addBotMessage(text);
+        });
+
+        socket.on('error', (err) => {
+            addBotMessage('<span class="error-message">Error: ' + escapeHtml(err.message || JSON.stringify(err)) + '</span>');
+            awaitingResponse = false;
+            sendButton.disabled = false;
+        });
+
+        // Send message to server
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            if (!socket.connected) {
+                addBotMessage('<span class="error-message">Not connected to server, retrying...</span>');
+                return;
+            }
+            addUserMessage(message);
+            messageInput.value = '';
+            showTypingIndicator();
+            sendButton.disabled = true;
+            awaitingResponse = true;
+            socket.emit('user_message', { text: message });
+        }
+
+        // Enter key to send
+        messageInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Input state
+        messageInput.addEventListener('input', function() {
+            sendButton.disabled = !this.value.trim() || !socket.connected;
+        });
+
+        // Example buttons
+        function addExampleButtons() {
+            const examples = [
+                "Hello!",
+                "Tell me about yourself",
+                "What time is it?",
+                "Help me write a simple Python function",
+                "Explain the MCP protocol",
+                "What's the weather like today?"
+            ];
+            const examplesDiv = document.createElement('div');
+            examplesDiv.className = 'examples-container';
+            examplesDiv.style.padding = '10px 20px';
+            examplesDiv.style.borderTop = '1px solid #eee';
+            examplesDiv.innerHTML = '<p style="font-size: 12px; color: #666; margin-bottom: 8px;">Try these questions:</p>';
+            examples.forEach(example => {
+                const button = document.createElement('button');
+                button.textContent = example;
+                button.style.cssText = `
+                    background: #f0f0f0;
+                    border: 1px solid #ddd;
+                    border-radius: 15px;
+                    padding: 5px 10px;
+                    margin: 3px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                `;
+                button.onmouseover = function() { this.style.background = '#e0e0e0'; };
+                button.onmouseout = function() { this.style.background = '#f0f0f0'; };
+                button.onclick = function() {
+                    messageInput.value = example;
+                    messageInput.focus();
+                    sendButton.disabled = false;
+                };
+                examplesDiv.appendChild(button);
+            });
+            document.querySelector('.container').insertBefore(examplesDiv, document.querySelector('.input-area'));
+        }
+
+        setTimeout(addExampleButtons, 600);
+
+        // Global for button
+        window.sendMessage = sendMessage;
+
+        // Focus input on load
+        window.addEventListener('DOMContentLoaded', function() {
+            messageInput.focus();
+        });
+    </script>
+</body>
+</html>
