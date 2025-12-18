@@ -40,5 +40,22 @@ Steps:
 2. (Optional) In your repository Settings → Pages, confirm the site is served from the `gh-pages` branch (the action will create it automatically).
 3. Visit `https://<your-username>.github.io/<repo-name>/` to access the frontend.
 
-Note: The server (backend proxy that holds `MCP_TOKEN`) cannot run on GitHub Pages — deploy it to Railway, Render, Fly, Heroku or similar and set the `MCP_TOKEN` environment variable there. Ensure the frontend is configured to point to your deployed server's URL (or use a relative path if hosting frontend and backend from the same origin).
+Note: The server (backend proxy that holds `MCP_TOKEN`) cannot run on GitHub Pages — deploy it to Railway, Render, Fly, Heroku or similar and set the `MCP_TOKEN` environment variable there. When you deploy the backend use these steps:
+
+1. Create a new project on Railway (or Render) and connect your GitHub repo.
+2. Set environment variables on the host: `MCP_TOKEN` (your token), optional `REDIS_URL`.
+3. Ensure the service's start command is `npm start` and it exposes the assigned `PORT`.
+4. Once deployed you will have a public backend URL (for example `https://my-chatbot.up.railway.app`).
+
+**Update the frontend to point to the backend**
+- Edit `public/index.html` and find the Socket.io initialization. Replace `const socket = io();` with:
+
+```js
+// replace with your backend URL
+const socket = io('https://<your-backend-url>');
+```
+
+- If you want the frontend to use the same origin automatically, leave `const socket = io();` and host the frontend and backend under the same domain (with a reverse proxy) so the client connects to the same origin.
+
+After the backend is live and the frontend points to it, the site at `https://<your-username>.github.io/<repo>/` should connect and chat normally.
 

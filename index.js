@@ -19,9 +19,18 @@ if (!MCP_TOKEN) {
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+// Allow CORS for Socket.io so the frontend hosted on GitHub Pages can connect to this backend
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// health endpoint for uptime checks
+app.get('/health', (req, res) => res.json({ ok: true, timestamp: Date.now() }));
 
 // Setup Redis if provided, else fallback to in-memory
 let redis = null;
